@@ -23,7 +23,6 @@
 
 PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/bin/glgps_nvidiaTegra2android:system/bin/glgps_nvidiaTegra2android \
-    vendor/toshiba/tostab03/proprietary/bin/brcm_patchram_plus:system/bin/brcm_patchram_plus \
     vendor/toshiba/tostab03/proprietary/etc/asound.conf:system/etc/asound.conf \
     vendor/toshiba/tostab03/proprietary/etc/firmware/nvddk_audiofx_core.axf:system/etc/firmware/nvddk_audiofx_core.axf \
     vendor/toshiba/tostab03/proprietary/etc/firmware/nvddk_audiofx_transport.axf:system/etc/firmware/nvddk_audiofx_transport.axf \
@@ -46,9 +45,6 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/etc/firmware/nvmm_wmaprodec.axf:system/etc/firmware/nvmm_wmaprodec.axf \
     vendor/toshiba/tostab03/proprietary/etc/firmware/nvrm_avp.bin:system/etc/firmware/nvrm_avp.bin \
     vendor/toshiba/tostab03/proprietary/etc/wifi/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf \
-    vendor/toshiba/tostab03/proprietary/framework/com.toshiba.ec.jar:system/framework/com.toshiba.ec.jar \
-    vendor/toshiba/tostab03/proprietary/framework/ImmVibe.jar:system/framework/ImmVibe.jar \
-    vendor/toshiba/tostab03/proprietary/framework/ImmVibeAndroid.jar:system/framework/ImmVibeAndroid.jar \
     vendor/toshiba/tostab03/proprietary/lib/egl/libGLES_android.so:system/lib/egl/libGLES_android.so \
     vendor/toshiba/tostab03/proprietary/lib/egl/libEGL_tegra.so:system/lib/egl/libEGL_tegra.so \
     vendor/toshiba/tostab03/proprietary/lib/egl/libGLESv1_CM_tegra.so:system/lib/egl/libGLESv1_CM_tegra.so \
@@ -111,6 +107,9 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/lib/libnvwinsys.so:system/lib/libnvwinsys.so \
     vendor/toshiba/tostab03/proprietary/lib/libnvwsi.so:system/lib/libnvwsi.so \
     vendor/toshiba/tostab03/proprietary/lib/libstagefrighthw.so:system/lib/libstagefrighthw.so \
+    vendor/toshiba/tostab03/proprietary/lib/modules/bcm4329.ko:system/lib/modules/bcm4329.ko \
+    vendor/toshiba/tostab03/proprietary/lib/modules/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
+    vendor/toshiba/tostab03/proprietary/lib/modules/tun.ko:system/lib/modules/tun.ko \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/alsa.conf:system/usr/share/alsa/alsa.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/cards/aliases.conf:system/usr/share/alsa/cards/aliases.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/center_lfe.conf:system/usr/share/alsa/pcm/center_lfe.conf \
@@ -128,5 +127,6 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround50.conf:system/usr/share/alsa/pcm/surround50.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround51.conf:system/usr/share/alsa/pcm/surround51.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround71.conf:system/usr/share/alsa/pcm/surround71.conf \
-    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcm4329.bin:system/vendor/firmware/fw_bcm4329.bin \
-    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcm4329_apsta.bin:system/vendor/firmware/fw_bcm4329_apsta.bin
+    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd.bin:system/vendor/firmware/fw_bcmdhd.bin \
+    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd_apsta.bin:system/vendor/firmware/fw_bcmdhd_apsta.bin \
+    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd_p2p.bin:system/vendor/firmware/fw_bcmdhd_p2p.bin
