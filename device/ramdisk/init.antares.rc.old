@@ -1,0 +1,264 @@
+import init.antares.usb.rc
+
+on early-init
+    mount debugfs debugfs /sys/kernel/debug
+
+    export EXTERNAL_STORAGE /mnt/sdcard
+    export EXTERNAL_STORAGE2 /mnt/sdcard2
+    mkdir /mnt/sdcard 0000 system system
+    # for backwards compatibility
+    symlink /mnt/sdcard /sdcard
+
+    mkdir /mnt/sdcard2 0000 system system
+
+    # create directory for mounting usb drives
+    mkdir /mnt/usbdrive 0666 system system
+    symlink /mnt/usbdrive /usbdrive
+
+on fs
+    mount ext4 /dev/block/mmcblk0p3 /system wait ro
+    setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
+    mount ext4 /dev/block/mmcblk0p7 /data wait noatime nosuid nodev
+    mount ext4 /dev/block/mmcblk0p4 /cache wait noatime nosuid nodev
+
+# for recovery mode
+    chmod 0660 /dev/block/mmcblk0p5
+    chown system system /dev/block/mmcblk0p5
+
+on post-fs-data
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    mkdir /data/nvcam 0777 system system
+    chown dhcp dhcp /data/misc/dhcp
+
+    # create directory for srs_processing.cfg //kikugawa
+    mkdir /data/proc 0770 audio audio
+
+    # Set indication (checked by vold) that we have finished this action
+    setprop vold.post_fs_data_done 1
+
+on boot
+# bluetooth
+    # power up/down interface
+    chmod 0660 /sys/class/rfkill/rfkill0/state
+    chmod 0660 /sys/class/rfkill/rfkill0/type
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+
+# Wireless LED permissions for WindowManager modify
+    chmod 644 /sys/devices/platform/leds-gpio/leds/RF_LED/brightness
+    chown system system /sys/devices/platform/leds-gpio/leds/RF_LED/brightness
+
+# dmieep permission
+    chmod 664 /dev/dmieep
+    chown system system /dev/dmieep
+
+# i2c-4 permission
+    chmod 660 /dev/i2c-4
+    chown system system /dev/i2c-4
+
+# backlight
+    chown system system /sys/class/backlight/pwm-backlight/brightness
+
+# dc param
+    chown system system /sys/module/dc/parameters/gamma_lut_red
+    chown system system /sys/module/dc/parameters/gamma_lut_green
+    chown system system /sys/module/dc/parameters/gamma_lut_blue
+    chown system system /sys/module/dc/parameters/set_gamma
+
+# Sensor
+    chown system system /sys/bus/iio/devices/device0/lux
+    chmod system system /sys/bus/iio/devices/device0/proxim_ir
+
+# Power management settings
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 216000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1000000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 216000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq 1000000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpufreq/interactive/go_maxspeed_load 80
+    write /sys/module/cpuidle/parameters/lp2_in_idle 1
+
+#marker
+
+# Default Read Ahead value for sdcards
+    write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+    write /sys/block/mmcblk1/queue/read_ahead_kb 2048
+
+# GPS
+    write /sys/class/gpio/export 203
+    write /sys/class/gpio/gpio203/value 0
+    write /sys/class/gpio/gpio203/direction out
+    mkdir /data/gps 703
+    chmod 0660 /sys/class/gpio/gpio203/value
+    chown gps gps /sys/class/gpio/gpio203/value
+    chown gps gps /data/gps
+    mkdir /dev/gps 770
+    chown gps gps /dev/gps
+    symlink /dev/gps/socket /dev/socket/gps
+
+# Enable USB auto suspend for MBM devices
+   write /sys/bus/usb/devices/1-1.3/power/autosuspend 2
+   write /sys/bus/usb/devices/1-1.3/power/control auto
+   write /sys/bus/usb/devices/1-1.3/power/wakeup enabled
+
+# WWAN
+    symlink /dev/bus/usb/002/049 /dev/cdc-wdm0
+    symlink /dev/bus/usb/002/050 /dev/cdc-wdm1
+
+    chmod 666 /dev/ttyACM0
+    chmod 666 /dev/ttyACM1
+    chmod 666 /dev/ttyACM2
+    chmod 666 /dev/cdc-wdm0
+    chmod 666 /dev/cdc-wdm1
+    chown radio system /dev/cdc-wdm0
+    chown radio system /dev/cdc-wdm1
+    chmod 0644 /sys/class/rfkill/rfkill1/type
+    chmod 0644 /sys/class/rfkill/rfkill1/state
+    chown system system /sys/class/rfkill/rfkill1/type
+    chown system system /sys/class/rfkill/rfkill1/state
+    chmod 0644 /sys/class/rfkill/rfkill2/type
+    chmod 0644 /sys/class/rfkill/rfkill2/state
+    chown system system /sys/class/rfkill/rfkill2/type
+    chown system system /sys/class/rfkill/rfkill2/state
+# For CTS testAllFilesInSysAreNotWritable
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/remote_throttling
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/remote_critical
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/local_critical
+    chown media media /sys/devices/platform/tegra-i2c.0/i2c-0/0-0060/fm34_enable
+    chown media media /sys/devices/platform/soc-audio/mic_mute
+
+
+# devices which ueventd sometimes fails to chmod to 660
+    chmod 0640 /dev/accelirq
+    chown system system /dev/accelirq
+    chmod 0640 /dev/mpu
+    chown system system /dev/mpu
+    chmod 0640 /dev/mpuirq
+    chown system system /dev/mpuirq
+
+service wpa_supplicant /system/bin/wpa_supplicant \
+    -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+#   we will start as root and wpa_supplicant will switch to user wifi
+#   after setting up the capabilities required for WEXT
+#   user wifi
+#   group wifi inet keystore
+    class main
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+# BT MAC
+service btmac-setup /system/bin/bdaddr2
+    class main
+    oneshot
+
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL -f/system/etc/dhcpcd/dhcpcd.conf
+    class main
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+service iprenew_eth0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+
+# bugreport is triggered by the VOLUME-DOWN and VOLUME-UP keys
+service bugreport /system/bin/dumpstate -d -v -o /data/storage/bugreports/bugreport
+    class main
+    disabled
+    oneshot
+    keycodes 115 114
+
+#BCM
+service hciattach /system/bin/brcm_patchram_plus --enable_hci \
+    --baudrate 3000000 --patchram /etc/firmware/bcm4329.hcd --pcm_role slave \
+    --enable_lpm /dev/ttyHS2
+    class main
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+
+# Start GPS daemon
+service gps-daemon /system/bin/glgps_nvidiaTegra2android -c /system/etc/gps/gpsconfig.xml
+    class late_start
+    user gps
+    group gps
+    disabled
+
+on property:ro.toshiba.device_wwan=0
+   start gps-daemon
+   stop ril-daemon
+ 
+#Prepare TF service
+service tf_daemon /system/bin/tf_daemon -storageDir /data/tf -d
+    disabled
+    class main
+    user root
+    group shell
+    oneshot
+
+#Create data directory and start service
+on property:tf.enable=y
+    mkdir /data/tf
+    start tf_daemon
+
+# Haptic vibrator
+
+service immvibed /system/bin/immvibed
+    class main
+    user immvibe
+    group immvibe
+    oneshot
+
+#service immvbsd /system/bin/immvbsd -adb
+#    class late_start
+#    oneshot
+
+#service ril-daemon /system/bin/rild -l /system/lib/libmbm-ril.so -- -d /dev/ttyACM0 -i usb0
+#    class late_start
+#    socket rild stream 660 root radio
+#    socket rild-debug stream 660 radio system
+#    user root
+#    group radio cache inet misc audio sdcard_rw
+
+service exifinfo /system/bin/exifinfo
+    class main
+    oneshot
+
+# Power on WWAN if property ro.toshiba.device_wwan=1
+on property:ro.toshiba.device_wwan=1
+   write /sys/class/rfkill/rfkill1/state 1
+   write /sys/class/rfkill/rfkill2/state 1
+
+# Control wwan module wakeup function
+on property:ril.wwan.wakeup=enabled
+	write /sys/bus/usb/devices/1-1.3/power/wakeup enabled
+
+on property:ril.wwan.wakeup=disabled
+	write /sys/bus/usb/devices/1-1.3/power/wakeup disabled
+
+on property:ril.wwan.module.power=enabled
+	write /sys/class/rfkill/rfkill1/state 1
+	write /sys/class/rfkill/rfkill2/state 1
+
+on property:ril.wwan.module.power=disabled
+	write /sys/class/rfkill/rfkill1/state 0
+	write /sys/class/rfkill/rfkill2/state 0
+
