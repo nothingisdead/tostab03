@@ -3,34 +3,37 @@ import init.antares.usb.rc
 on early-init
     mount debugfs debugfs /sys/kernel/debug
 
-    export EXTERNAL_STORAGE /mnt/sdcard
-    export EXTERNAL_STORAGE2 /mnt/sdcard2
+    export INTERNAL_STORAGE /mnt/sdcard
+    export EXTERNAL_STORAGE /mnt/sdcard2
+    export EXTERNAL_STORAGE_UDISK /mnt/usb
     mkdir /mnt/sdcard 0000 system system
+    mkdir /mnt/sdcard2 0000 system system
+    mkdir /mnt/usbdrive 0000 system system
+
     # for backwards compatibility
     symlink /mnt/sdcard /sdcard
 
-    mkdir /mnt/sdcard2 0000 system system
-
-    # create directory for mounting usb drives
-    mkdir /mnt/usbdrive 0666 system system
-    symlink /mnt/usbdrive /usbdrive
-
 on fs
-    mount ext4 /dev/block/mmcblk0p3 /system wait ro
+    mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p3 /system wait ro
     setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
-    mount ext4 /dev/block/mmcblk0p7 /data wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
-    mount ext4 /dev/block/mmcblk0p4 /cache wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
+    mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p7 /data wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
+    mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p4 /cache wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
 
 on post-fs-data
-    mkdir /data/misc/wifi 0770 wifi wifi
-    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+
     mkdir /data/misc/dhcp 0770 dhcp dhcp
     mkdir /data/nvcam 0777 system system
     chown dhcp dhcp /data/misc/dhcp
 
-    # we will remap this as /mnt/sdcard with the sdcard fuse tool
-    mkdir /data/media 0775 media_rw media_rw
-    chown media_rw media_rw /data/media
+    mkdir /system/etc/wifi 0770 wifi wifi
+    chmod 0770 /system/etc/wifi
+    chmod 0660 /system/etc/wifi/wpa_supplicant.conf
+    chown wifi wifi /system/etc/wifi/wpa_supplicant.conf
+
+    chmod 0770 /data/misc/wifi
+    chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+    chown wifi wifi /data/misc/wifi
+    chown wifi wifi /data/misc/wifi/wpa_supplicant.conf
 
     # Set indication (checked by vold) that we have finished this action
     setprop vold.post_fs_data_done 1
@@ -43,12 +46,38 @@ on boot
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
 
+# Wireless LED permissions for WindowManager modify
+    chmod 644 /sys/devices/platform/leds-gpio/leds/RF_LED/brightness
+    chown system system /sys/devices/platform/leds-gpio/leds/RF_LED/brightness
+
+# dmieep permission
+    chmod 664 /dev/dmieep
+    chown system system /dev/dmieep
+
+# i2c-4 permission
+    chmod 660 /dev/i2c-4
+    chown system system /dev/i2c-4
+
 # backlight
     chown system system /sys/class/backlight/pwm-backlight/brightness
 
+# dc param
+    chown system system /sys/module/dc/parameters/gamma_lut_red
+    chown system system /sys/module/dc/parameters/gamma_lut_green
+    chown system system /sys/module/dc/parameters/gamma_lut_blue
+    chown system system /sys/module/dc/parameters/set_gamma
+
 # Sensor
-    chmod 664 /sys/bus/iio/devices/device0/illuminance0_input
-    chmod 664 /sys/bus/iio/devices/device0/proximity_raw
+    chmod 666 /dev/nvhost-ctrl
+    chmod 666 /dev/nvhost-display
+    chmod 666 /dev/nvhost-dsi
+    chmod 666 /dev/nvhost-gr2d
+    chmod 666 /dev/nvhost-gr3d
+    chmod 666 /dev/nvhost-isp
+    chmod 666 /dev/nvhost-mpe
+    chmod 666 /dev/nvhost-vi
+    chown system system /sys/bus/iio/devices/device0/lux
+    chmod system system /sys/bus/iio/devices/device0/proxim_ir
 
 
 # Power management settings
@@ -61,11 +90,6 @@ on boot
     write /sys/devices/system/cpu/cpufreq/interactive/go_maxspeed_load 80
     write /sys/module/cpuidle/parameters/lp2_in_idle 1
 
-# Touchscreen Config-UI interface
-   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/debug_enable
-   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/pause_driver
-   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/slowscan_enable
-
 # Default Read Ahead value for sdcards
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
     write /sys/block/mmcblk1/queue/read_ahead_kb 2048
@@ -74,17 +98,37 @@ on boot
     write /sys/class/gpio/export 203
     write /sys/class/gpio/gpio203/value 0
     write /sys/class/gpio/gpio203/direction out
-    chown root system /sys/class/gpio/gpio203/value
-    chmod 0664 /sys/class/gpio/gpio203/value
+    mkdir /data/gps 703
+    chmod 0660 /sys/class/gpio/gpio203/value
+    chown gps gps /sys/class/gpio/gpio203/value
+    chown gps gps /data/gps
+    mkdir /dev/gps 770
+    chown gps gps /dev/gps
+    symlink /dev/gps/socket /dev/socket/gps
+
+# WWAN
+    chmod 0644 /sys/class/rfkill/rfkill1/type
+    chmod 0644 /sys/class/rfkill/rfkill1/state
+    chown system system /sys/class/rfkill/rfkill1/type
+    chown system system /sys/class/rfkill/rfkill1/state
+    chmod 0644 /sys/class/rfkill/rfkill2/type
+    chmod 0644 /sys/class/rfkill/rfkill2/state
+    chown system system /sys/class/rfkill/rfkill2/type
+    chown system system /sys/class/rfkill/rfkill2/state
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/remote_throttling
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/remote_critical
+    chmod 0644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/local_critical
+    chown media media /sys/devices/platform/tegra-i2c.0/i2c-0/0-0060/fm34_enable
+    chown media media /sys/devices/platform/soc-audio/mic_mute
 
 service wpa_supplicant /system/bin/wpa_supplicant \
-    -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -e/data/misc/wifi/entropy.bin
+    -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
 #   we will start as root and wpa_supplicant will switch to user wifi
 #   after setting up the capabilities required for WEXT
 #   user wifi
-#   group wifi inet keystore
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
+    group system wifi inet
     disabled
     oneshot
 
@@ -108,7 +152,7 @@ service dhcpcd_eth0 /system/bin/dhcpcd -ABKL -f/system/etc/dhcpcd/dhcpcd.conf
     disabled
     oneshot
 
-service iprenew_wlan0 /system/bin/dhcpcd -n
+service iprenew_wlan0 /system/bin/dhcpcd -n wlan0
     class main
     disabled
     oneshot
@@ -131,12 +175,6 @@ service nvcpud /system/bin/nvcpud
     class main
     user root
     group root
-
-# create virtual SD card at /mnt/sdcard, based on the /data/media directory
-# deamon will drop to user/group system/media_rw after initializing
-# underlying files in /data/media wil be created with user and group media_rw (1023)
-service sdcard /system/bin/sdcard /data/media 1023 1023
-    class late_start
 
 # bugreport is triggered by the VOLUME-DOWN and VOLUME-UP keys
 service bugreport /system/bin/dumpstate -d -v -o /data/storage/bugreports/bugreport
@@ -162,16 +200,8 @@ service hciattach /system/bin/brcm_patchram_plus --enable_hci \
   group system inet sdcard_rw
   class late_start
 
-# Mount usb drives as /usbdrive. Generally usb drives are formatted with FAT
-# filesystem, so we support FAT as of now.
-on device-added-/sys/block/sda
-    mount vfat /dev/block/sda /mnt/usbdrive
-
-on device-removed-/sys/block/sda
-    umount /mnt/usbdrive
-
 # Recovery daemon: configure MSC partition
-service recoveryd /system/bin/recoveryd /dev/block/platform/sdhci-tegra.3/by-name/MSC
+service recoveryd /system/bin/recoveryd /dev/block/platform/sdhci-tegra.3/by-num/p5
     disabled
     class main
     user root
@@ -191,14 +221,9 @@ service tf_daemon /system/bin/tf_daemon -storageDir /data/tf -d
 
 # create filesystems if necessary
 service setup_fs /system/bin/setup_fs \
-        /dev/block/platform/sdhci-tegra.3/by-name/UDA \
-        /dev/block/platform/sdhci-tegra.3/by-name/CAC
+        /dev/block/platform/sdhci-tegra.3/by-num/p7 \
+        /dev/block/platform/sdhci-tegra.3/by-num/p4
     class core
     user root
     group root
     oneshot
-
-# Create data directory and start service
-on property:tf.enable=y
-    mkdir /data/tf
-    start tf_daemon

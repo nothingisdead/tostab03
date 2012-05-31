@@ -1,7 +1,4 @@
 on early-init
-    # Set init and its forked children's oom_adj.
-    write /proc/1/oom_adj -16
-
     start ueventd
 
 # create mountpoints
@@ -23,7 +20,8 @@ loglevel 3
     export ANDROID_DATA /data
     export ASEC_MOUNTPOINT /mnt/asec
     export LOOP_MOUNTPOINT /mnt/obb
-    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/filterfw.jar
+    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/apache-xml.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/core-junit.jar:/system/framework/pm.jar
+	export VIBE_PIPE_PATH /dev/pipes
 
 # Backward compatibility
     symlink /system/etc /etc
@@ -68,7 +66,6 @@ loglevel 3
     write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
     write /proc/sys/kernel/sched_compat_yield 1
     write /proc/sys/kernel/sched_child_runs_first 0
-    write /proc/sys/kernel/randomize_va_space 2
 
 # Create cgroup mount points for process groups
     mkdir /dev/cpuctl
@@ -88,12 +85,10 @@ loglevel 3
     chmod 0777 /dev/cpuctl/bg_non_interactive/tasks
     # 5.0 %
     write /dev/cpuctl/bg_non_interactive/cpu.shares 52
-
-# Allow everybody to read the xt_qtaguid resource tracking misc dev.
-# This is needed by any process that uses socket tagging.
-    chmod 0644 /dev/xt_qtaguid
+	mkdir /dev/pipes 0771 immvibe immvibe
 
 on fs
+#    insmod /modules/sealime.ko
 # mount mtd partitions
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
     mount yaffs2 mtd@system /system
@@ -124,7 +119,11 @@ on post-fs
     chmod 0220 /proc/sysrq-trigger
 
     # create the lost+found directories, so as to enforce our permissions
-    mkdir /cache/lost+found 0770 root root
+    mkdir /cache/lost+found 0770
+
+    # double check the perms, in case lost+found already exists, and set owner
+    chown root root /cache/lost+found
+    chmod 0770 /cache/lost+found
 
 on post-fs-data
     # We chown/chmod /data again so because mount is run as root + defaults
@@ -134,7 +133,10 @@ on post-fs-data
     # Create dump dir and collect dumps.
     # Do this before we mount cache so eventually we can use cache for
     # storing dumps on platforms which do not have a dedicated dump partition.
-    mkdir /data/dontpanic 0750 root log
+   
+    mkdir /data/dontpanic
+    chown root log /data/dontpanic
+    chmod 0750 /data/dontpanic
 
     # Collect apanic data, free resources and re-arm trigger
     copy /proc/apanic_console /data/dontpanic/apanic_console
@@ -152,26 +154,33 @@ on post-fs-data
     mkdir /data/misc/bluetoothd 0770 bluetooth bluetooth
     mkdir /data/misc/bluetooth 0770 system system
     mkdir /data/misc/keystore 0700 keystore keystore
-    mkdir /data/misc/keychain 0771 system system
-    mkdir /data/misc/vpn 0770 system vpn
+    mkdir /data/misc/vpn 0770 system system
     mkdir /data/misc/systemkeys 0700 system system
+    mkdir /data/misc/vpn/profiles 0770 system system
+    # give system access to wpa_supplicant.conf for backup and restore
+    mkdir /data/misc/wifi 0770 wifi wifi
+    chmod 0770 /data/misc/wifi
+    chmod 0660 /data/misc/wifi/wpa_supplicant.conf
     mkdir /data/local 0771 shell shell
     mkdir /data/local/tmp 0771 shell shell
     mkdir /data/data 0771 system system
+    rm /data/data/com.android.gallery3d/shared_prefs/com.android.gallery3d_preferences.xml
+    rm /data/data/com.google.android.gallery3d/shared_prefs/com.google.android.gallery3d_preferences.xml
     mkdir /data/app-private 0771 system system
     mkdir /data/app 0771 system system
     mkdir /data/property 0700 root root
 
-    # create dalvik-cache, so as to enforce our permissions
+    # create dalvik-cache and double-check the perms
     mkdir /data/dalvik-cache 0771 system system
-
-    # create resource-cache and double-check the perms
-    mkdir /data/resource-cache 0771 system system
-    chown system system /data/resource-cache
-    chmod 0771 /data/resource-cache
+    chown system system /data/dalvik-cache
+    chmod 0771 /data/dalvik-cache
 
     # create the lost+found directories, so as to enforce our permissions
-    mkdir /data/lost+found 0770 root root
+    mkdir /data/lost+found 0770
+
+    # double check the perms, in case lost+found already exists, and set owner
+    chown root root /data/lost+found
+    chmod 0770 /data/lost+found
 
     # create directory for DRM plug-ins
     mkdir /data/drm 0774 drm drm
@@ -181,11 +190,6 @@ on post-fs-data
     # won't work.
     # Set indication (checked by vold) that we have finished this action
     #setprop vold.post_fs_data_done 1
-
-    chown system system /sys/class/android_usb/android0/f_mass_storage/lun/file
-    chmod 0660 /sys/class/android_usb/android0/f_mass_storage/lun/file
-    chown system system /sys/class/android_usb/android0/f_rndis/ethaddr
-    chmod 0660 /sys/class/android_usb/android0/f_rndis/ethaddr
 
 on boot
 # basic network init
@@ -201,15 +205,55 @@ on boot
 # set RLIMIT_NICE to allow priorities from 19 to -20
     setrlimit 13 40 40
 
-# Memory management.  Basic kernel parameters, and allow the high
-# level system server to be able to adjust the kernel OOM driver
-# paramters to match how it is managing things.
+# Define the oom_adj values for the classes of processes that can be
+# killed by the kernel.  These are used in ActivityManagerService.
+    setprop ro.FOREGROUND_APP_ADJ 0
+    setprop ro.VISIBLE_APP_ADJ 3
+    setprop ro.PERCEPTIBLE_APP_ADJ 2
+    setprop ro.HEAVY_WEIGHT_APP_ADJ 4
+    setprop ro.SECONDARY_SERVER_ADJ 5
+    setprop ro.BACKUP_APP_ADJ 6
+    setprop ro.HOME_APP_ADJ 2
+    setprop ro.HIDDEN_APP_MIN_ADJ 7
+    setprop ro.EMPTY_APP_ADJ 15
+
+# Define the memory thresholds at which the above process classes will
+# be killed.  These numbers are in pages (4k).
+    # These are currently tuned for tablets with approx 1GB RAM.
+    setprop ro.FOREGROUND_APP_MEM 8192
+    setprop ro.VISIBLE_APP_MEM 10240
+    setprop ro.PERCEPTIBLE_APP_MEM 12288
+    setprop ro.HEAVY_WEIGHT_APP_MEM 12288
+    setprop ro.SECONDARY_SERVER_MEM 14336
+    setprop ro.BACKUP_APP_MEM 14336
+    setprop ro.HOME_APP_MEM 14336
+    setprop ro.HIDDEN_APP_MEM 16384
+    setprop ro.EMPTY_APP_MEM 20480
+
+    # Old values for phones.  Should probably be adjusted up for the next
+    # phone version.
+    #setprop ro.FOREGROUND_APP_MEM 2048
+    #setprop ro.VISIBLE_APP_MEM 3072
+    #setprop ro.PERCEPTIBLE_APP_MEM 4096
+    #setprop ro.HEAVY_WEIGHT_APP_MEM 4096
+    #setprop ro.SECONDARY_SERVER_MEM 6144
+    #setprop ro.BACKUP_APP_MEM 6144
+    #setprop ro.HOME_APP_MEM 6144
+    #setprop ro.HIDDEN_APP_MEM 7168
+    #setprop ro.EMPTY_APP_MEM 8192
+
+# Write value must be consistent with the above properties.
+# Note that the driver only supports 6 slots, so we have combined some of
+# the classes into the same memory level; the associated processes of higher
+# classes will still be killed first.
+    write /sys/module/lowmemorykiller/parameters/adj 0,1,3,6,7,15
+
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
-    chown root system /sys/module/lowmemorykiller/parameters/adj
-    chmod 0664 /sys/module/lowmemorykiller/parameters/adj
-    chown root system /sys/module/lowmemorykiller/parameters/minfree
-    chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+    write /sys/module/lowmemorykiller/parameters/minfree 8192,10240,12288,14336,16384,20480
+
+    # Set init its forked children's oom_adj.
+    write /proc/1/oom_adj -16
 
     # Tweak background writeout
     write /proc/sys/vm/dirty_expire_centisecs 200
@@ -253,28 +297,32 @@ on boot
     chown system system /sys/kernel/ipv4/tcp_rmem_def
     chown system system /sys/kernel/ipv4/tcp_rmem_max
     chown root radio /proc/cmdline
+# For CTS
+chmod 644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-0043/enable
+chmod 644 /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/enable
+chmod 644 /sys/devices/platform/tegra-i2c.0/i2c-0/0-0044/device0/enable
+chown system system /sys/devices/platform/tegra-i2c.3/i2c-4/4-0043/enable
+chown system system /sys/devices/platform/tegra-i2c.3/i2c-4/4-004c/enable
+chown system system /sys/devices/platform/tegra-i2c.0/i2c-0/0-0044/device0/enable
 
 # Define TCP buffer sizes for various networks
 #   ReadMin, ReadInitial, ReadMax, WriteMin, WriteInitial, WriteMax,
-    setprop net.tcp.buffersize.default 4096,87380,110208,4096,16384,110208
-    setprop net.tcp.buffersize.wifi    524288,1048576,2097152,262144,524288,1048576
-    setprop net.tcp.buffersize.lte     524288,1048576,2097152,262144,524288,1048576
-    setprop net.tcp.buffersize.umts    4094,87380,110208,4096,16384,110208
-    setprop net.tcp.buffersize.hspa    4094,87380,262144,4096,16384,262144
-    setprop net.tcp.buffersize.edge    4093,26280,35040,4096,16384,35040
-    setprop net.tcp.buffersize.gprs    4092,8760,11680,4096,8760,11680
+    setprop net.tcp.buffersize.default 4096,873800,10000000,4096,163840,10000000
+    setprop net.tcp.buffersize.wifi    4095,87380,110208,4096,16384,110208
+    setprop net.tcp.buffersize.hspa 4092,876000,10000000,4096,876000,10000000
+    setprop net.tcp.buffersize.umts 4094,873800,10000000,4096,163840,10000000
+    setprop net.tcp.buffersize.edge 4093,262800,10000000,4096,163840,10000000
+    setprop net.tcp.buffersize.gprs 4092,876000,10000000,4096,876000,10000000
 
 # Set this property so surfaceflinger is not started by system_init
     setprop system_init.startsurfaceflinger 0
 
+    start storage_init
     class_start core
     class_start main
 
 on nonencrypted
     class_start late_start
-
-on charger
-    class_start charger
 
 on property:vold.decrypt=trigger_reset_main
     class_reset main
@@ -295,6 +343,32 @@ on property:vold.decrypt=trigger_restart_framework
 on property:vold.decrypt=trigger_shutdown_framework
     class_reset late_start
     class_reset main
+
+## Daemon processes to be run by init.
+##
+service ueventd /sbin/ueventd
+    class core
+    critical
+
+service storage_init /system/etc/storage_init.sh
+    class core
+    disabled
+    oneshot
+
+service console /system/bin/sh
+    class core
+    console
+    disabled
+    user shell
+    group log
+
+on property:ro.debuggable=1
+    start console
+
+# adbd is controlled by the persist.sys.usb.config system property
+service adbd /sbin/adbd
+    class core
+    disabled
 
 # Used to disable USB when switching states
 on property:sys.usb.config=none
@@ -339,43 +413,6 @@ on property:sys.usb.config=accessory,adb
 on property:persist.sys.usb.config=*
     setprop sys.usb.config $persist.sys.usb.config
 
-## Daemon processes to be run by init.
-##
-service ueventd /sbin/ueventd
-    class core
-    critical
-
-service console /system/bin/sh
-    class core
-    console
-    disabled
-    user shell
-    group log
-
-on property:ro.debuggable=1
-    start console
-
-# adbd is controlled via property triggers in init.<platform>.usb.rc
-service adbd /sbin/adbd
-    class core
-    disabled
-
-# adbd on at boot in emulator
-on property:ro.kernel.qemu=1
-    start adbd
-
-# This property trigger has added to imitiate the previous behavior of "adb root".
-# The adb gadget driver used to reset the USB bus when the adbd daemon exited,
-# and the host side adb relied on this behavior to force it to reconnect with the
-# new adbd instance after init relaunches it. So now we force the USB bus to reset
-# here when adbd sets the service.adb.root property to 1.  We also restart adbd here
-# rather than waiting for init to notice its death and restarting it so the timing
-# of USB resetting and adb restarting more closely matches the previous behavior.
-on property:service.adb.root=1
-    write /sys/class/android_usb/android0/enable 0
-    restart adbd
-    write /sys/class/android_usb/android0/enable 1
-
 service servicemanager /system/bin/servicemanager
     class core
     user system
@@ -383,8 +420,11 @@ service servicemanager /system/bin/servicemanager
     critical
     onrestart restart zygote
     onrestart restart media
-    onrestart restart surfaceflinger
-    onrestart restart drm
+
+service dmiserver /system/bin/dmiserver
+    class main
+    user system
+    group system
 
 service vold /system/bin/vold
     class core
@@ -399,12 +439,12 @@ service netd /system/bin/netd
 service debuggerd /system/bin/debuggerd
     class main
 
-#service ril-daemon /system/bin/rild
-#    class main
-#    socket rild stream 660 root radio
-#    socket rild-debug stream 660 radio system
-#    user root
-#    group radio cache inet misc audio sdcard_rw log
+service ril-daemon /system/bin/rild
+    class late_start
+    socket rild stream 660 root radio
+    socket rild-debug stream 660 radio system
+    user root
+    group radio cache inet misc audio sdcard_rw
 
 service surfaceflinger /system/bin/surfaceflinger
     class main
@@ -417,18 +457,19 @@ service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-sys
     socket zygote stream 666
     onrestart write /sys/android_power/request_state wake
     onrestart write /sys/power/state on
+    onrestart restart surfaceflinger
     onrestart restart media
     onrestart restart netd
 
 service drm /system/bin/drmserver
     class main
     user drm
-    group system inet drmrpc
+    group system inet
 
 service media /system/bin/mediaserver
     class main
     user media
-    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc
+    group audio camera inet net_bt net_bt_admin
     ioprio rt 4
 
 service bootanim /system/bin/bootanimation
@@ -464,8 +505,8 @@ service flash_recovery /system/etc/install-recovery.sh
 service racoon /system/bin/racoon
     class main
     socket racoon stream 600 system system
-    # IKE uses UDP port 500. Racoon will setuid to vpn after binding the port.
-    group vpn net_admin inet
+    # racoon will setuid to vpn after getting necessary resources.
+    group net_admin
     disabled
     oneshot
 
@@ -473,7 +514,7 @@ service mtpd /system/bin/mtpd
     class main
     socket mtpd stream 600 system system
     user vpn
-    group vpn net_admin inet net_raw
+    group vpn net_admin net_raw
     disabled
     oneshot
 
@@ -487,4 +528,8 @@ service dumpstate /system/bin/dumpstate -s
     class main
     socket dumpstate stream 0660 shell log
     disabled
+    oneshot
+
+service tupdate /system/bin/tupdate --port 2002
+    class late_start
     oneshot

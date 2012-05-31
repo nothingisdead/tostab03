@@ -107,9 +107,6 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/lib/libnvwinsys.so:system/lib/libnvwinsys.so \
     vendor/toshiba/tostab03/proprietary/lib/libnvwsi.so:system/lib/libnvwsi.so \
     vendor/toshiba/tostab03/proprietary/lib/libstagefrighthw.so:system/lib/libstagefrighthw.so \
-    vendor/toshiba/tostab03/proprietary/lib/modules/bcm4329.ko:system/lib/modules/bcm4329.ko \
-    vendor/toshiba/tostab03/proprietary/lib/modules/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
-    vendor/toshiba/tostab03/proprietary/lib/modules/tun.ko:system/lib/modules/tun.ko \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/alsa.conf:system/usr/share/alsa/alsa.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/cards/aliases.conf:system/usr/share/alsa/cards/aliases.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/center_lfe.conf:system/usr/share/alsa/pcm/center_lfe.conf \
@@ -127,6 +124,5 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround50.conf:system/usr/share/alsa/pcm/surround50.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround51.conf:system/usr/share/alsa/pcm/surround51.conf \
     vendor/toshiba/tostab03/proprietary/usr/share/alsa/pcm/surround71.conf:system/usr/share/alsa/pcm/surround71.conf \
-    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd.bin:system/vendor/firmware/fw_bcmdhd.bin \
-    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd_apsta.bin:system/vendor/firmware/fw_bcmdhd_apsta.bin \
-    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcmdhd_p2p.bin:system/vendor/firmware/fw_bcmdhd_p2p.bin
+    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcm4329.bin:system/vendor/firmware/fw_bcm4329.bin \
+    vendor/toshiba/tostab03/proprietary/vendor/firmware/fw_bcm4329_apsta.bin:system/vendor/firmware/fw_bcm4329_apsta.bin

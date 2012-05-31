@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-BOARD_USES_GENERIC_AUDIO := false
+BOARD_USES_GENERIC_AUDIO := true
 USE_CAMERA_STUB := false
 
 # Inherit from the proprietary version
@@ -44,7 +44,7 @@ BOARD_KERNEL_PAGESIZE :=
 
 # EGL settings
 BOARD_EGL_CFG := device/toshiba/tostab03/prebuilt/egl.cfg
-USE_OPENGL_RENDERER := true
+USE_OPENGL_RENDERER := false
 
 # Misc display settings
 BOARD_USE_SKIA_LCDTEXT := true
@@ -58,16 +58,15 @@ BOARD_HAVE_BLUETOOTH_BCM := true
 TARGET_HAS_DOCK_BATTERY := true
 
 # Wifi related defines
-BOARD_WPA_SUPPLICANT_DRIVER := NL80211
-WPA_SUPPLICANT_VERSION      := VER_0_8_X
-BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_bcmdhd
-BOARD_HOSTAPD_DRIVER        := NL80211
-BOARD_HOSTAPD_PRIVATE_LIB   := lib_driver_cmd_bcmdhd
-BOARD_WLAN_DEVICE           := bcmdhd
-WIFI_DRIVER_FW_PATH_PARAM   := "/sys/module/bcmdhd/parameters/firmware_path"
-WIFI_DRIVER_FW_PATH_STA     := "/vendor/firmware/fw_bcmdhd.bin"
-WIFI_DRIVER_FW_PATH_AP      := "/vendor/firmware/fw_bcmdhd_apsta.bin"
-WIFI_DRIVER_FW_PATH_P2P     := "/vendor/firmware/fw_bcmdhd_p2p.bin"
+WPA_SUPPLICANT_VERSION := VER_0_8_X
+BOARD_WPA_SUPPLICANT_DRIVER := WEXT
+BOARD_WLAN_DEVICE := bcm4329
+BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_wext
+WIFI_DRIVER_MODULE_PATH     := "/system/lib/modules/bcm4329.ko"
+WIFI_DRIVER_FW_STA_PATH     := "/system/vendor/firmware/fw_bcm4329.bin"
+WIFI_DRIVER_FW_AP_PATH      := "/system/vendor/firmware/fw_bcm4329_apsta.bin"
+WIFI_DRIVER_MODULE_NAME     := "bcm4329"
+WIFI_DRIVER_MODULE_ARG      := "iface_name=wlan0 firmware_path=/vendor/firmware/fw_bcm4329.bin nvram_path=/system/etc/nvram.txt"
 
 
 # Todo fix these values to the specific sizes
@@ -77,9 +76,10 @@ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 8388608
 BOARD_SYSTEMIMAGE_PARTITION_SIZE := 527433728
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 29850022707
 BOARD_FLASH_BLOCK_SIZE := 4096
+BOARD_VOLD_MAX_PARTITIONS := 8
 
 # Try to build the kernel
-TARGET_KERNEL_CONFIG := tegra_antares_android_defconfig
+TARGET_KERNEL_CONFIG := cyanogenmod_antares_defconfig
 
 # Prebuilt Kernel Fallback
 TARGET_PREBUILT_KERNEL := device/toshiba/tostab03/kernel

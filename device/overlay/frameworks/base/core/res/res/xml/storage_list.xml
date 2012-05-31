@@ -38,19 +38,20 @@
              android:primary="true"
              android:emulated="true"
              android:mtpReserve="100" />
-    <storage android:mountPoint="/Removable/MicroSD" 
+    <storage android:mountPoint="/mnt/sdcard2" 
              android:storageDescription="@string/storage_sd_card" 
              android:primary="false" 
              android:removable="true" />
-    <storage android:mountPoint="/Removable/USBdisk1" 
+    <storage android:mountPoint="/mnt/usb0" 
              android:storageDescription="@string/storage_usb" 
              android:primary="false" 
              android:removable="true" />
-    <storage android:mountPoint="/Removable/USBdisk2" 
+    <storage android:mountPoint="/mnt/usb1" 
              android:storageDescription="@string/storage_usb" 
-             android:primary="false" android:removable="true" />
-    <storage android:mountPoint="/Removable/SD" 
-             android:storageDescription="@string/storage_sd_card" 
+             android:primary="false" 
+             android:removable="true" />
+    <storage android:mountPoint="/mnt/usb2" 
+             android:storageDescription="@string/storage_usb" 
              android:primary="false" 
              android:removable="true" />
 </StorageList>

@@ -44,6 +44,9 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/gps.conf:system/etc/gps.conf \
     $(LOCAL_PATH)/prebuilt/gpsconfig.xml:system/etc/gps/gpsconfig.xml
 
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/recoveryd:system/bin/recoveryd
+
 # Input device configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/icu/icudt44l.dat:system/usr/icu/icudt44l.dat \
@@ -105,12 +108,9 @@ PRODUCT_PROPERTY_OVERRIDES := \
     	ro.opengles.version=131072 \
 	ro.ethernet.interface=eth0 \
 	ro.ethernet.autoEnable=yes \
-	rild.libpath=/system/lib/libmbm-ril.so \
-	rild.libargs=-d /dev/ttyACM0 -i wwan0 \
 	persist.sys.usb.config=adb \
 	dalvik.vm.dexopt-data-only=1 \
 	ro.toshiba.device_wwan=0 \
-	ro.sf.broadband=5521gw \
 	ro.sf.hwrotation=0 \
 	ro.bootanim.hwrotation=270 \
 	mbm.gps.config.gps_ctrl=/dev/cdc-wdm0 \
@@ -120,11 +120,6 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	mbm.gps.config.supl.allow_uncert=yes \
 	mbm.gps.config.supl.username=test \
 	mbm.gps.config.supl.password=test
-
-
-# Default property overrides
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
-	sys.usb.config=adb
 
 ADDITIONAL_DEFAULT_PROPERTIES += ro.secure=0
 
