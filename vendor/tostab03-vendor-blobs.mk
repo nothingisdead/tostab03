@@ -61,7 +61,6 @@ PRODUCT_COPY_FILES += \
     vendor/toshiba/tostab03/proprietary/lib/hw/sensors.tegra.so:system/lib/hw/sensors.tegra.so \
     vendor/toshiba/tostab03/proprietary/lib/hw/sensors.tostab03.so:system/lib/hw/sensors.tostab03.so \
     vendor/toshiba/tostab03/proprietary/lib/hw/tegra_alsa.tostab03.so:system/lib/hw/tegra_alsa.tostab03.so \
-    vendor/toshiba/tostab03/proprietary/lib/libasound.so:system/lib/libasound.so \
     vendor/toshiba/tostab03/proprietary/lib/libcgdrv.so:system/lib/libcgdrv.so \
     vendor/toshiba/tostab03/proprietary/lib/libmllite.so:system/lib/libmllite.so \
     vendor/toshiba/tostab03/proprietary/lib/libmpl.so:system/lib/libmpl.so \

@@ -37,7 +37,6 @@ lib/hw/overlay.tegra.so
 lib/hw/sensors.tegra.so
 lib/hw/sensors.tostab03.so
 lib/hw/tegra_alsa.tostab03.so
-lib/libasound.so
 lib/libcgdrv.so
 lib/libmllite.so
 lib/libmpl.so

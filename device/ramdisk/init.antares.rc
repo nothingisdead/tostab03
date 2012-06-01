@@ -3,15 +3,15 @@ import init.antares.usb.rc
 on early-init
     mount debugfs debugfs /sys/kernel/debug
 
-    export INTERNAL_STORAGE /mnt/sdcard
-    export EXTERNAL_STORAGE /mnt/sdcard2
-    export EXTERNAL_STORAGE_UDISK /mnt/usb
+    export EXTERNAL_STORAGE /mnt/sdcard
     mkdir /mnt/sdcard 0000 system system
-    mkdir /mnt/sdcard2 0000 system system
-    mkdir /mnt/usbdrive 0000 system system
-
     # for backwards compatibility
     symlink /mnt/sdcard /sdcard
+
+    # create directory for mounting usb drives
+    mkdir /Removable 0755 media_rw media_rw
+    mkdir /Removable/SD 0666 system system
+    mkdir /Removable/USB 0666 system system
 
 on fs
     mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p3 /system wait ro
@@ -25,14 +25,11 @@ on post-fs-data
     mkdir /data/nvcam 0777 system system
     chown dhcp dhcp /data/misc/dhcp
 
-    mkdir /system/etc/wifi 0770 wifi wifi
     chmod 0770 /system/etc/wifi
     chmod 0660 /system/etc/wifi/wpa_supplicant.conf
     chown wifi wifi /system/etc/wifi/wpa_supplicant.conf
-
-    chmod 0770 /data/misc/wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
     chmod 0660 /data/misc/wifi/wpa_supplicant.conf
-    chown wifi wifi /data/misc/wifi
     chown wifi wifi /data/misc/wifi/wpa_supplicant.conf
 
     # Set indication (checked by vold) that we have finished this action

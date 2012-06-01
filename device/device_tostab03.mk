@@ -99,7 +99,8 @@ PRODUCT_COPY_FILES += \
 # Extra packages to build for this device
 PRODUCT_PACKAGES += \
 	com.android.future.usb.accessory \
-	make_ext4fs
+	make_ext4fs \
+	libasound
 
 # Properties specific for this device
 PRODUCT_PROPERTY_OVERRIDES := \
